@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Graph</title>
+	<style type="text/css">
+		#canvas	{
+			background-color: #eee;
+			display: none;
+		}
+	</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<div id="takeInput">
+		<h2>Enter number of nodes</h2>
+		<input type="number" id="nodes" min="1" max="20">
+		<h2>Enter number of edges</h2>
+		<input type="number" id="edges" min="1">
+		<button id="btn1" onclick="getEdges()">Submit</button>
+		<select id="edgeBeginValues" style="display:none"></select>
+		<select id="edgeEndValues" style="display:none"></select>
+		<button id="btn2" style="display:none" onclick="getNextEdge()"></button>
+
+</div>
+<script type="text/javascript" src="traversal.js"></script>
+<script type="text/javascript">
+	var canvas = document.getElementById('canvas');
+	canvas.width = window.innerWidth;
+	canvas.height = window.innerHeight;
+	var ctx = canvas.getContext('2d');
+
+	/*num_nodes : No of nodes entered by the user
+	  num_edges : No of edges entered by the user
+		edgesArray : Stores the user input for adjacent nodes
+		count : Stores the number of edges between a pair of nodes
+		countEdgesEntered : Keeps track of the number of edges entered by the user. Incremented after each input*/
+	var num_nodes,num_edges,edgesArray=[],count=[];
+	var countEdgesEntered = 1;
+
+	//Function to receive user input for number of nodes and edges and validate it
+	function getEdges()	{
+
+		var options = "";		//the innerHTML for the select tag
+		num_nodes = document.getElementById('nodes').value;
+		num_edges = document.getElementById('edges').value;
+		initGraph();				//initializes the graph with visited values as false and an empty adjacency list for each node
+		for(var i=0;i<num_nodes;i++)	{
+			options+="<option value="+(i+1)+">"+(i+1)+"</option>";
+		}
+		//user input validation
+		if(num_nodes == "" || num_edges == "" || num_nodes <0 || num_edges<0)	{
+			alert("Invalid Input");
+			location.reload();
+		}
+		if(num_nodes == 0)	{
+			alert("Empty graph!! Enter at least one node!!");
+			location.reload();
+		}
+		if(num_edges!=0)	{
+			document.getElementById('edgeBeginValues').innerHTML = options;
+			document.getElementById('edgeEndValues').innerHTML = options;
+			document.getElementById('btn2').innerHTML = "Submit values for edge 1";
+			document.getElementById('btn2').style.display = "block";
+			document.getElementById('edgeBeginValues').style.display = "block";
+			document.getElementById('edgeEndValues').style.display = "block";
+		}
+		else	{
+			/*if number of edges is zero, proceed to draw the graph without taking any further input*/
+			drawGraph();
+		}
+
+	}
+	//Function which is called every time the user submits a new edge entry
+	function getNextEdge()	{
+
+		var initialVertex = document.getElementById('edgeBeginValues').value;
+		var terminalVertex = document.getElementById('edgeEndValues').value;
+
+		//push the values into the adjacency list for the undirected graph
+		graphNodes[initialVertex-1].connections.push(terminalVertex-1);
+		graphNodes[terminalVertex-1].connections.push(initialVertex-1);
+		if(edgesArray.length == 0)	{
+			edgesArray.push(initialVertex);
+			edgesArray.push(terminalVertex);
+			count[0] = 1;
+		}
+		else	{
+			for(var i=0;i<edgesArray.length;i++)	{
+				//the following if block checks if multiple edges are there
+				if(edgesArray[i] == initialVertex)	{
+					if((i%2==0 && edgesArray[i+1]==terminalVertex)||(i%2==1 && edgesArray[i-1]==terminalVertex))	{
+						count[Math.floor(i/2)]++;
+						break;
+					}
+				}
+			}
+			if(i==edgesArray.length)	{
+				count.push(Number(1));
+				edgesArray.push(initialVertex);
+				edgesArray.push(terminalVertex);
+			}
+		}
+
+		if(countEdgesEntered == num_edges)	{
+			//if all the edges have been entered, proceed to drawing graph
+			drawGraph();
+		}
+		else	{
+			//increment the number of edges entered
+			countEdgesEntered++;
+			document.getElementById('btn2').innerHTML = "Submit values for edge "+countEdgesEntered;
+		}
+	}
+
+	function drawGraph()	{
+			document.getElementById('takeInput').style.display = "none";
+			canvas.style.display = "block";
+
+			/*semiMajorAxis : semi major axis of ellipse on which the nodes will be plotted
+				semiMinorAxis : semi major axis of ellipse on which the nodes will be plotted
+				theta : angle between successive nodes(with respect to director circle)
+				centerX,centerY : coordinates for center of the canvas
+				points : array to store the coordinates of the nodes*/
+			var semiMajorAxis = canvas.width/2 - 30,semiMinorAxis = canvas.height/2 - 30;
+			var theta = 2*Math.PI/num_nodes;
+			var angle = theta;
+			var centerX = canvas.width/2,centerY = canvas.height/2;
+			var points=[centerX + semiMajorAxis,centerY];		//coordinates for first node stored
+
+			//stores the coordinates of all the nodes into points array
+			for(var i=0;i<num_nodes-1;i++)	{
+				var x_next = centerX + semiMajorAxis*Math.cos(angle);
+				var y_next = centerY - semiMinorAxis*Math.sin(angle);
+				points.push(x_next);
+				points.push(y_next);
+				angle+=theta;
+			}
+
+
+
+
+			for(var i=0;i<edgesArray.length;i+=2) {
+
+				//if there are loops in the graph(where initial and terminal vertex refer to the same node)
+				if(edgesArray[i] == edgesArray[i+1])	{
+					var radiusLoop = 20;			//radius of the loop
+					for(var j=0;j<count[i/2];j++)	{
+						ctx.beginPath();
+						ctx.arc(points[2*edgesArray[i]-2]+radiusLoop*Math.cos(theta*(edgesArray[i]-1)),points[2*edgesArray[i]-1]+radiusLoop*Math.sin(theta*(edgesArray[i]-1)),radiusLoop,0,2*Math.PI);
+						ctx.stroke();
+						radiusLoop+=10;
+					}
+				}
+				//when the initial and terminal vertex are distinct
+				else {
+					ctx.beginPath();
+					ctx.moveTo(points[2*edgesArray[i]-2],points[2*edgesArray[i]-1]);
+					ctx.lineTo(points[2*edgesArray[i+1]-2],points[2*edgesArray[i+1]-1]);
+					ctx.stroke();
+
+					//checks if there are multiple edges between these nodes
+					if(count[i/2]>1) {
+
+						/*midX,midY : midpoint of the initialVertex and terminalVertex
+							alpha : slope of normal to the line joining the nodes
+							sinAlpha,cosAlpha : sine and cosine values for alpha respectively
+							height : perpendicular distance of control point from the (midX,midY)*/
+						var midX = (points[2*edgesArray[i]-2] + points[2*edgesArray[i+1]-2])/2;
+						var midY = (points[2*edgesArray[i]-1] + points[2*edgesArray[i+1]-1])/2;
+						var alpha = Math.atan2(points[2*edgesArray[i]-2] - points[2*edgesArray[i+1]-2], points[2*edgesArray[i+1]-1] - points[2*edgesArray[i]-1]);
+						var sinAlpha = Math.sin(alpha);
+						var cosAlpha = Math.cos(alpha);
+						var height = 50;
+						for(var j=0;j<count[i/2]-1;j++)	{
+							//draw the multiple edges
+							ctx.beginPath();
+							ctx.moveTo(points[2*edgesArray[i]-2],points[2*edgesArray[i]-1]);
+							ctx.quadraticCurveTo(midX + height*cosAlpha, midY + height*sinAlpha,points[2*edgesArray[i+1]-2],points[2*edgesArray[i+1]-1]);
+							sinAlpha = -sinAlpha;
+							cosAlpha = -cosAlpha;
+							if(j%2==1) {
+								height += 50;
+							}
+							ctx.stroke();
+
+						}
+					}
+				}
+			}
+
+			//draw the nodes
+			for(var i=0;i<2*num_nodes;i+=2)	{
+				ctx.beginPath();
+				ctx.fillStyle = "red";
+				ctx.arc(points[i],points[i+1],15,0,2*Math.PI);
+				ctx.fill();
+				ctx.fillStyle = "yellow";
+				ctx.font = "20px Georgia";
+				ctx.fillText(i/2+1,points[i]-5,points[i+1]+5);
+			}
+
+			dfs();
+			bfs(Number(1));
+	}
+
+</script>
+</body>
+</html>
