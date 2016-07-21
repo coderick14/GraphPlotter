@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Graph</title>
+	<style type="text/css">
+		#canvas	{
+			background-color: #eee;
+			display: none;
+		}
+
+		#canvasMST	{
+			background-color: black;
+			display: none;
+		}
+		body {
+			font-family: calibri,sans-serif;
+		}
+	</style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas><br>
+<section id="traversalData"></section>
+<canvas id="canvasMST"></canvas>
+<div id="takeInput">
+		<h2>Enter number of nodes</h2>
+		<input type="number" id="nodes" min="1" max="20">
+		<h2>Enter number of edges</h2>
+		<input type="number" id="edges" min="1"><br><br>
+		<input type="radio" name="graphType" id="undi" checked>Undirected<br>
+		<input type="radio" name="graphType" id="di">Directed<br>
+		<button id="btn1" onclick="getEdges()">Submit</button>
+
+		<div id="showNext" style="display:none">
+			<h2>Enter initial vertex</h2><br>
+			<select id="edgeBeginValues" ></select>
+			<h2>Enter terminal vertex</h2><br>
+			<select id="edgeEndValues" ></select>
+			<h2>Enter edge weight</h2><br>
+			<input type="number" id="edgeWeight"  value="1"/><br>
+			<button id="btn2" onclick="getNextEdge()"></button>
+
+
+			<h2>Enter the starting node for bfs</h2><br>
+			<select id="bfsInput" value="1"></select>
+		</div>
+
+</div>
+<script type="text/javascript" src="traversal.js"></script>
+<script type="text/javascript" src="drawGraph.js"></script>
+</body>
+</html>		
